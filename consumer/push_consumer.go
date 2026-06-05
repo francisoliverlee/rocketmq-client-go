@@ -916,11 +916,45 @@ func (pc *pushConsumer) sendMessageBack(brokerName string, msg *primitive.Messag
 	var brokerAddr string
 	if len(brokerName) != 0 {
 		brokerAddr = pc.defaultConsumer.client.GetNameSrv().FindBrokerAddrByName(brokerName)
+		rlog.Info("sendMessageBack FindBrokerAddrByName", map[string]interface{}{
+			"brokerName":     brokerName,
+			"brokerAddr":     brokerAddr,
+			"topic":          msg.Topic,
+			"msgId":          msg.MsgId,
+			"queueId":        msg.Queue.QueueId,
+			"queueOffset":    msg.QueueOffset,
+			"reconsumeTimes": msg.ReconsumeTimes,
+			"delayLevel":     delayLevel,
+			"consumerGroup":  pc.consumerGroup,
+		})
 	} else {
 		brokerAddr = msg.StoreHost
+		rlog.Info("sendMessageBack StoreHost", map[string]interface{}{
+			"brokerName":     brokerName,
+			"brokerAddr":     brokerAddr,
+			"topic":          msg.Topic,
+			"msgId":          msg.MsgId,
+			"queueId":        msg.Queue.QueueId,
+			"queueOffset":    msg.QueueOffset,
+			"reconsumeTimes": msg.ReconsumeTimes,
+			"delayLevel":     delayLevel,
+			"consumerGroup":  pc.consumerGroup,
+		})
 	}
 	_, err := pc.client.InvokeSync(context.Background(), brokerAddr, pc.buildSendBackRequest(msg, delayLevel), 3*time.Second)
 	if err != nil {
+		rlog.Error("sendMessageBack failed", map[string]interface{}{
+			"brokerName":             brokerName,
+			"brokerAddr":             brokerAddr,
+			"topic":                  msg.Topic,
+			"msgId":                  msg.MsgId,
+			"queueId":                msg.Queue.QueueId,
+			"queueOffset":            msg.QueueOffset,
+			"reconsumeTimes":         msg.ReconsumeTimes,
+			"delayLevel":             delayLevel,
+			"consumerGroup":          pc.consumerGroup,
+			rlog.LogKeyUnderlayError: err.Error(),
+		})
 		return false
 	}
 	return true
